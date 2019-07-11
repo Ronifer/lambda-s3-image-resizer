@@ -27,15 +27,7 @@ exports.handler = function(event, context, callback) {
   );
   //   var dstBucket = srcBucket + "-resized";
   var dstBucket = srcBucket;
-  var dstKey = "resized-" + srcKey;
   var fileName = path.basename(srcKey);
-  var srcPath = path.dirname(srcKey) + "/";
-
-  // Sanity check: validate that source and destination are different buckets.
-  //   if (srcBucket == dstBucket) {
-  //     callback("Source and destination buckets are the same.");
-  //     return;
-  //   }
 
   // Infer the image type.
   var typeMatch = srcKey.match(/\.([^.]*)$/);
@@ -65,6 +57,7 @@ exports.handler = function(event, context, callback) {
       },
       function reduceQuality(response, next) {
         console.log("STEP 2", "reduce quality image");
+        // drop image quality 50% and converto to jpg
         gm(response.Body)
           .antialias(true)
           .density(72)
@@ -95,6 +88,7 @@ exports.handler = function(event, context, callback) {
       },
       function createThumbnail(response, next) {
         console.log("STEP 3", "create thumbnail");
+        // drop image quality 50% and resize to be a thumb default size
         gm(response.Body)
           .antialias(true)
           .density(72)
@@ -125,27 +119,6 @@ exports.handler = function(event, context, callback) {
             }
           });
       }
-      //   function transform(response, next) {
-      //     gm(response.Body).size(function(err, size) {
-      //       // Infer the scaling factor to avoid stretching the image unnaturally.
-      //       var scalingFactor = Math.min(
-      //         MAX_WIDTH / size.width,
-      //         MAX_HEIGHT / size.height
-      //       );
-      //       var width = scalingFactor * size.width;
-      //       var height = scalingFactor * size.height;
-
-      //       // Transform the image buffer in memory.
-      //       this.resize(width, height).toBuffer(imageType, function(err, buffer) {
-      //         if (err) {
-      //           next(err);
-      //         } else {
-      //           next(null, response.ContentType, buffer);
-      //         }
-      //       });
-      //     });
-      //   },
-      //   function upload(bufferedImage, next) {}
     ],
     function(err) {
       if (err) {
