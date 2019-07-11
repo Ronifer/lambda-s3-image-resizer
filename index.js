@@ -6,8 +6,8 @@ var gm = require("gm").subClass({ imageMagick: true }); // Enable ImageMagick in
 var util = require("util");
 
 // constants
-var MAX_WIDTH = 100;
-var MAX_HEIGHT = 100;
+var THUMB_WIDTH = 500;
+var THUMB_HEIGHT = 440;
 
 var validImageFormats = ["jpg", "jpeg", "png", "gif", "eps"];
 
@@ -63,8 +63,8 @@ exports.handler = function(event, context, callback) {
           next
         );
       },
-      function convert(response, next) {
-        console.log("converting image");
+      function reduceQuality(response, next) {
+        console.log("STEP 2", "reduce quality image");
         gm(response.Body)
           .antialias(true)
           .density(72)
@@ -76,7 +76,38 @@ exports.handler = function(event, context, callback) {
             } else {
               var position = fileName.lastIndexOf(".");
               var key = "lower/" + fileName.slice(0, position) + ".jpg";
-              console.log("STEP 3", "upload transformed image");
+              // Stream the transformed image to a different S3 bucket.
+              s3.putObject(
+                {
+                  Bucket: dstBucket,
+                  Key: key,
+                  Body: buffer,
+                  ContentType: "image/jpeg"
+                },
+                function(err) {
+                  console.log(err);
+                  console.log("image uploaded");
+                  next(null, response);
+                }
+              );
+            }
+          });
+      },
+      function createThumbnail(response, next) {
+        console.log("STEP 3", "create thumbnail");
+        gm(response.Body)
+          .antialias(true)
+          .density(72)
+          .quality(50)
+          .resize(THUMB_WIDTH, THUMB_HEIGHT)
+          .toBuffer("jpg", function(err, buffer) {
+            if (err) {
+              console.log("line 76", err);
+              next(err); // call the main callback in case of error
+            } else {
+              var position = fileName.lastIndexOf(".");
+              var key = "thumb/" + fileName.slice(0, position) + ".jpg";
+              console.log("upload thumb image");
               // Stream the transformed image to a different S3 bucket.
               s3.putObject(
                 {
@@ -93,7 +124,7 @@ exports.handler = function(event, context, callback) {
               );
             }
           });
-      },
+      }
       //   function transform(response, next) {
       //     gm(response.Body).size(function(err, size) {
       //       // Infer the scaling factor to avoid stretching the image unnaturally.
@@ -114,7 +145,7 @@ exports.handler = function(event, context, callback) {
       //       });
       //     });
       //   },
-    //   function upload(bufferedImage, next) {}
+      //   function upload(bufferedImage, next) {}
     ],
     function(err) {
       if (err) {
