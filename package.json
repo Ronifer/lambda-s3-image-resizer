@@ -1,0 +1,25 @@
+{
+  "name": "lambda-s3-image-resizer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "async": "^3.1.0",
+    "gm": "^1.23.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ronifer/lambda-s3-image-resizer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Ronifer/lambda-s3-image-resizer/issues"
+  },
+  "homepage": "https://github.com/Ronifer/lambda-s3-image-resizer#readme"
+}
